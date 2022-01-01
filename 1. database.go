@@ -24,8 +24,18 @@ Pengaturan Database Pooling
 (DB)SetConnMaxLifetime(number)	= Pengaturan berapa lama koneksi boleh digunakan
 */
 
+/**
+Error Tipe Data Date
+- Secara default DRiver MySQL untuk Go-Lang akan melakukan query tipe data DATE, DATETIME, TIMESTAMP menjadi []bytes / []uint8
+- Dimana ini bisa di konversi menjadi string lalu di parsing ke time.Time
+- Nammnun hal ini merepotkan jika dijalankan manual, kita bisa meminta Driver MySQL untuk golang secara otomatis melakukan parsing
+- Parsing otomatis tinggal menambahkan parseTime=true pada dataSourceName
+*/
+
 func GetConnection() *sql.DB {
-	db, err := sql.Open("mysql", "root:masukdb@tcp(localhost:3306)/golang_database")
+	//db, err := sql.Open("mysql", "root:masukdb@tcp(localhost:3306)/golang_database")
+	// konversi date otomatis
+	db, err := sql.Open("mysql", "root:masukdb@tcp(localhost:3306)/golang_database?parseTime=true")
 	if err != nil {
 		panic(err)
 	}
