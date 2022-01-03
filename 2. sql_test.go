@@ -153,3 +153,34 @@ func TestRowsResult(t *testing.T) {
 
 	defer rows.Close()
 }
+
+/**
+SQL Dengan Parameter
+- Saat kita membuat aplikas, kita tidak mungkin akan melakukan hardcode perintah di SQL di kode Go-Lang
+- Biasanya kita akan menerima input data dari user, lalu membuat perintah SQL dari input user dan mengirimnya menggunakan perintah SQL
+*/
+
+func TestSqlInjection(t *testing.T) {
+	db := GetConnection()
+	ctx := context.Background()
+
+	username := "admin"
+	password := "admin"
+
+	rows, err := db.QueryContext(ctx, "SELECT username FROM user WHERE username='"+username+"' AND password='"+password+"' LIMIT 1")
+	if err != nil {
+		panic(err)
+	}
+
+	if rows.Next() {
+		var user string
+		err = rows.Scan(&user)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Sukses login: ", user)
+	} else {
+		fmt.Println("Gagal login")
+	}
+	defer rows.Close()
+}
