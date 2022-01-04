@@ -164,7 +164,7 @@ func TestSqlInjection(t *testing.T) {
 	db := GetConnection()
 	ctx := context.Background()
 
-	username := "admin"
+	username := "admin'; # "
 	password := "admin"
 
 	rows, err := db.QueryContext(ctx, "SELECT username FROM user WHERE username='"+username+"' AND password='"+password+"' LIMIT 1")
@@ -183,4 +183,68 @@ func TestSqlInjection(t *testing.T) {
 		fmt.Println("Gagal login")
 	}
 	defer rows.Close()
+}
+
+/**
+SQL Injection
+- SQL Injection adalah sebuah teknik yang menyalahgunakan sebuah celah keamanan yang terjadi dalam lapisan basis data sebuah aplikasi
+- Biasanya SQL Injection dilakukan dengan cara mengirim input dari user dengan perintah yang salah, sehingga menyebabkan hasil SQL yang kita input tidak valid
+- SQL Injection sangat berbahaya, jika sampai salah membuat SQL, bisa jadi data kita tidak aman
+
+Kode SQL Injection
+- username := "admin'; #"
+- password := salah
+
+Hasil query diatas dimanipulasi dimana merubah dapat merubah query
+SELECT username FROM user WHERE username='admin'; # AND password='"+password+"' LIMIT 1"
+
+Solusi?
+- Jangan membaut query SQL secara manual dengan menggabungkan string secara bulat-bulat
+- Jika kita membutuhkan parameter ketika membuat SQL, kita bisa menggunakan function Execute atau Query dengan parameter
+- Sebenarnya function EXec dan Query memiliki parameter tambahan yang bisa kita gunakan untuk mensubtitusi parameter dari
+function tersebut ke SQL query yang kita buat
+- Untuk menandai sebuah SQL memebutuhkan parameter, kita bisa menggunakan karakter ? (tanda tanya)
+*/
+
+func TestSqlInjectionSafe(t *testing.T) {
+	db := GetConnection()
+	ctx := context.Background()
+
+	username := "admin'; #"
+	password := "admin"
+
+	sqlQuery := "SELECT username FROM user WHERE username=? AND password=? LIMIT 1"
+	rows, err := db.QueryContext(ctx, sqlQuery, username, password)
+	if err != nil {
+		panic(err)
+	}
+
+	if rows.Next() {
+		var user string
+		err = rows.Scan(&user)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Sukses login: ", user)
+	} else {
+		fmt.Println("Gagal login")
+	}
+	defer rows.Close()
+}
+
+func TestExcelSqlParameter(t *testing.T) {
+	db := GetConnection()
+	ctx := context.Background()
+
+	user := "zaka'; DROP TABLE user; #" // terbebas sql injection, data dimasukkan mentah-mentah
+	passwd := "zaka"
+
+	sqlQuery := "INSERT INTO user(username, password) VALUES(?,?)"
+	_, err := db.ExecContext(ctx, sqlQuery, user, passwd)
+	if err != nil {
+		panic(err)
+	}
+
+	defer db.Close()
+	fmt.Println("Sukses insert data")
 }
